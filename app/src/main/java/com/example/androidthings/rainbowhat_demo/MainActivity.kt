@@ -10,7 +10,6 @@ import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
 import android.hardware.SensorManager
 import android.os.Bundle
-import android.os.Handler
 import android.util.Log
 import com.google.android.things.contrib.driver.button.Button
 import com.google.android.things.contrib.driver.bmx280.Bmx280
@@ -30,23 +29,24 @@ class MainActivity : Activity() {
     var buttonA : Button? = null
     var buttonB : Button? = null
     var buttonC : Button? = null
-    var runnable : Runnable = Runnable {
-        toggleRainbow()
-    }
+
+    var ledStrip = RainbowHatLedStrip()
+    var scanner = Kitt(ledStrip = ledStrip)
+
 
     var rainbowState = false
-    var handler: Handler = android.os.Handler()
+
 
     fun toggleRainbow() {
         Log.d(TAG, "toggle rainbow")
         rainbow(rainbowState)
         rainbowState = !rainbowState
-        handler.postDelayed(runnable, 1000)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         Log.d(TAG, "onCreate")
+        ledStrip.brightness(1)
 
         try {
 
@@ -55,12 +55,6 @@ class MainActivity : Activity() {
             initButtons()
 
 //            rainbow()
-
-            // temp sensor always seems to report the same value of 26.711567
-            // TODO: test using the python lib
-            displayCurrentTemp()
-            //monitorTemp()
-
 
         } catch (ex: RuntimeException) {
 
@@ -74,7 +68,7 @@ class MainActivity : Activity() {
 
     override fun onStart() {
         super.onStart()
-        handler.postDelayed(runnable, 1000)
+        scanner.start()
     }
 
     override fun onDestroy() {
@@ -84,7 +78,7 @@ class MainActivity : Activity() {
         buttonB!!.close()
         buttonC!!.close()
 
-        handler.removeCallbacks(runnable)
+        scanner.close()
     }
 
     fun bootSequence() {
@@ -137,6 +131,8 @@ class MainActivity : Activity() {
         buttonC!!.setOnButtonEventListener { button, pressed -> blueLed!!.value = pressed }
     }
 
+    // temp sensor always seems to report the same value of 26.711567
+    // TODO: test using the python lib
     fun displayCurrentTemp() {
         // Log the current temperature
         val sensor = RainbowHat.openSensor()
@@ -154,6 +150,7 @@ class MainActivity : Activity() {
         sensor.close()
     }
 
+
     fun rainbow(on : Boolean) {
         // Light up the rainbow
         val ledstrip = RainbowHat.openLedStrip()
@@ -166,6 +163,8 @@ class MainActivity : Activity() {
         // Close the device when done.
         ledstrip.close()
     }
+
+
 
     fun monitorTemp() {
         // Continously report temperature.
