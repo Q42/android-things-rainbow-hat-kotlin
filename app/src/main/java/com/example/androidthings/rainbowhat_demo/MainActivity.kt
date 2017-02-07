@@ -10,6 +10,7 @@ import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
 import android.hardware.SensorManager
 import android.os.Bundle
+import android.os.Handler
 import android.util.Log
 import com.google.android.things.contrib.driver.button.Button
 import com.google.android.things.contrib.driver.bmx280.Bmx280
@@ -29,11 +30,23 @@ class MainActivity : Activity() {
     var buttonA : Button? = null
     var buttonB : Button? = null
     var buttonC : Button? = null
+    var runnable : Runnable = Runnable {
+        toggleRainbow()
+    }
+
+    var rainbowState = false
+    var handler: Handler = android.os.Handler()
+
+    fun toggleRainbow() {
+        Log.d(TAG, "toggle rainbow")
+        rainbow(rainbowState)
+        rainbowState = !rainbowState
+        handler.postDelayed(runnable, 1000)
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         Log.d(TAG, "onCreate")
-
 
         try {
 
@@ -41,7 +54,7 @@ class MainActivity : Activity() {
 
             initButtons()
 
-            rainbow()
+//            rainbow()
 
             // temp sensor always seems to report the same value of 26.711567
             // TODO: test using the python lib
@@ -58,6 +71,12 @@ class MainActivity : Activity() {
         }
     }
 
+
+    override fun onStart() {
+        super.onStart()
+        handler.postDelayed(runnable, 1000)
+    }
+
     override fun onDestroy() {
         super.onDestroy()
         Log.d(TAG, "onDestroy")
@@ -65,6 +84,7 @@ class MainActivity : Activity() {
         buttonB!!.close()
         buttonC!!.close()
 
+        handler.removeCallbacks(runnable)
     }
 
     fun bootSequence() {
@@ -134,13 +154,13 @@ class MainActivity : Activity() {
         sensor.close()
     }
 
-    fun rainbow() {
+    fun rainbow(on : Boolean) {
         // Light up the rainbow
         val ledstrip = RainbowHat.openLedStrip()
         ledstrip.setBrightness(1)
         val rainbow = IntArray(RainbowHat.LEDSTRIP_LENGTH)
         for (i in rainbow.indices) {
-            rainbow[i] = Color.HSVToColor(254, arrayOf(i * 360f / RainbowHat.LEDSTRIP_LENGTH , 1f, 1f ).toFloatArray() )
+            rainbow[i] = if (!on) 0 else Color.HSVToColor(254, arrayOf(i * 360f / RainbowHat.LEDSTRIP_LENGTH , 1f, 1f ).toFloatArray() )
         }
         ledstrip.write(rainbow)
         // Close the device when done.
