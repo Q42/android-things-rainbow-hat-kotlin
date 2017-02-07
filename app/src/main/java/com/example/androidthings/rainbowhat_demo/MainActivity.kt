@@ -3,12 +3,14 @@
 package com.example.androidthings.rainbowhat_demo
 
 import android.app.Activity
+import android.graphics.Color
 import android.os.Bundle
 import android.util.Log
 import com.google.android.things.contrib.driver.bmx280.Bmx280
 import com.google.android.things.contrib.driver.ht16k33.Ht16k33
 import com.google.android.things.contrib.driver.rainbowhat.RainbowHat
 import com.google.android.things.pio.Gpio
+import com.google.android.things.pio.PeripheralManagerService
 import java.io.IOException
 
 
@@ -21,13 +23,13 @@ class MainActivity : Activity() {
         Log.d(TAG, "Hello!!! from Android Things in Kotlin!!!!")
 
 
-        //        PeripheralManagerService manager = new PeripheralManagerService();
-        //        List<String> portList = manager.getGpioList();
-        //        if (portList.isEmpty()) {
-        //            Log.i(TAG, "No GPIO port available on this device.");
-        //        } else {
-        //            Log.i(TAG, "List of available ports: " + portList);
-        //        }
+        val manager = PeripheralManagerService()
+        val portList = manager.getGpioList()
+        if (portList.isEmpty()) {
+            Log.i(TAG, "No GPIO port available on this device.");
+        } else {
+            Log.i(TAG, "List of available ports: " + portList);
+        }
 
         // Light up the Red LED.
         var led: Gpio? = null
@@ -69,11 +71,13 @@ class MainActivity : Activity() {
 
 
             // Light up the rainbow
+
+
             val ledstrip = RainbowHat.openLedStrip()
-            ledstrip.setBrightness(0)
+            ledstrip.setBrightness(1)
             val rainbow = IntArray(RainbowHat.LEDSTRIP_LENGTH)
             for (i in rainbow.indices) {
-                rainbow[i] = 0 //Color.HSVToColor(255, new float[]{i * 360.f / rainbow.length, 1.0f, 1.0f});
+                rainbow[i] = Color.HSVToColor(254, arrayOf(i * 360f / RainbowHat.LEDSTRIP_LENGTH , 1f, 1f ).toFloatArray() )
             }
             ledstrip.write(rainbow)
             // Close the device when done.
@@ -83,42 +87,39 @@ class MainActivity : Activity() {
             val button = RainbowHat.openButton(RainbowHat.BUTTON_A)
             button.setOnButtonEventListener { button, pressed -> Log.d(TAG, "button A pressed:" + pressed) }
             // Close the device when done.
-            button.close()
             //
             //            // Detect button press.
             val buttonb = RainbowHat.openButton(RainbowHat.BUTTON_B)
             buttonb.setOnButtonEventListener { button, pressed -> Log.d(TAG, "button B pressed:" + pressed) }
             // Close the device when done.
-            buttonb.close()
             //
             //            // Detect button press.
             val buttonc = RainbowHat.openButton(RainbowHat.BUTTON_C)
             buttonc.setOnButtonEventListener { button, pressed -> Log.d(TAG, "button C pressed:" + pressed) }
             // Close the device when done.
-            buttonc.close()
-
 
             // Continously report temperature.
-            //            final SensorManager sensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
-            //            sensorManager.registerDynamicSensorCallback(new SensorManager.DynamicSensorCallback() {
-            //                @Override
-            //                public void onDynamicSensorConnected(Sensor sensor) {
-            //                    if (sensor.getType() == Sensor.TYPE_AMBIENT_TEMPERATURE) {
-            //                        sensorManager.registerListener(
-            //                                new SensorEventListener() {
-            //                                    @Override
-            //                                    public void onSensorChanged(SensorEvent event) {
-            //                                        Log.i(TAG, "sensor changed: " + event.values[0]);
-            //                                    }
-            //                                    @Override
-            //                                    public void onAccuracyChanged(Sensor sensor, int accuracy) {
-            //                                        Log.i(TAG, "accuracy changed: " + accuracy);
-            //                                    }
-            //                                },
-            //                                sensor, SensorManager.SENSOR_DELAY_NORMAL);
-            //                    }
-            //                }
-            //            });
+//            val sensorManager = getSystemService(Context.SENSOR_SERVICE) as SensorManager
+//
+//            var cb = object: SensorManager.DynamicSensorCallback() {
+//
+//                override fun onDynamicSensorConnected(sensor: Sensor) {
+//                    if (sensor.getType() == Sensor.TYPE_AMBIENT_TEMPERATURE) {
+//                        sensorManager.registerListener(
+//                                object: SensorEventListener {
+//                                    override fun onSensorChanged(event: SensorEvent) {
+//                                        Log.i(TAG, "sensor changed: " + event.values[0])
+//                                    }
+//                                    override fun onAccuracyChanged(sensor: Sensor, accuracy: Int) {
+//                                        Log.i(TAG, "accuracy changed: " + accuracy)
+//                                    }
+//                                },
+//                                sensor, SensorManager.SENSOR_DELAY_NORMAL);
+//                    }
+//                }
+//            }
+//
+//            sensorManager.registerDynamicSensorCallback( cb)
 
         } catch (ex: RuntimeException) {
 
@@ -127,7 +128,6 @@ class MainActivity : Activity() {
         } catch (e: InterruptedException) {
             e.printStackTrace()
         }
-
     }
 
     override fun onDestroy() {
