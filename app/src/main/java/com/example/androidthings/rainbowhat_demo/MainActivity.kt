@@ -30,8 +30,8 @@ class MainActivity : Activity() {
     var buttonB : Button? = null
     var buttonC : Button? = null
 
-    var ledStrip = RainbowHatLedStrip()
-    var scanner = Kitt(ledStrip = ledStrip)
+
+    var mode : Behavior? = null
 
 
     var rainbowState = false
@@ -46,7 +46,7 @@ class MainActivity : Activity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         Log.d(TAG, "onCreate")
-        ledStrip.brightness(1)
+
 
         try {
 
@@ -65,12 +65,6 @@ class MainActivity : Activity() {
         }
     }
 
-
-    override fun onStart() {
-        super.onStart()
-        scanner.start()
-    }
-
     override fun onDestroy() {
         super.onDestroy()
         Log.d(TAG, "onDestroy")
@@ -78,7 +72,7 @@ class MainActivity : Activity() {
         buttonB!!.close()
         buttonC!!.close()
 
-        scanner.close()
+        mode!!.close()
     }
 
     fun bootSequence() {
@@ -121,14 +115,35 @@ class MainActivity : Activity() {
         blueLed!!.value = false
 
         buttonA = RainbowHat.openButton(RainbowHat.BUTTON_A)
-        buttonA!!.setOnButtonEventListener { button, pressed -> redLed!!.value = pressed  }
+        buttonA!!.setOnButtonEventListener { button, pressed ->
+            redLed!!.value = pressed
+            if (pressed) {
+                mode?.close()
+                mode = Kitt("KITT", 2)
+                mode!!.start()
+            }
+        }
 
         buttonB = RainbowHat.openButton(RainbowHat.BUTTON_B)
-        buttonB!!.setOnButtonEventListener { button, pressed -> greenLed!!.value = pressed }
+        buttonB!!.setOnButtonEventListener { button, pressed ->
+            greenLed!!.value = pressed
+            if (pressed) {
+                mode?.close()
+                mode = Kitt("CARR", 1)
+                mode!!.start()
+            }
+        }
 
 
         buttonC = RainbowHat.openButton(RainbowHat.BUTTON_C)
-        buttonC!!.setOnButtonEventListener { button, pressed -> blueLed!!.value = pressed }
+        buttonC!!.setOnButtonEventListener { button, pressed ->
+            blueLed!!.value = pressed
+            if (pressed) {
+                mode?.close()
+                mode = Kitt("HAWQ", 0)
+                mode!!.start()
+            }
+        }
     }
 
     // temp sensor always seems to report the same value of 26.711567

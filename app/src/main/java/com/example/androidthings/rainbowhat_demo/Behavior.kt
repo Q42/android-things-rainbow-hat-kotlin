@@ -15,13 +15,7 @@ abstract class Behavior {
 
     var handler: Handler = android.os.Handler()
 
-    fun charDisplay(str : String) {
-        val segment = RainbowHat.openDisplay()
-        segment.setBrightness(Ht16k33.HT16K33_BRIGHTNESS_MAX)
-        segment.display(str)
-        segment.setEnabled(true)
-        segment.close()
-    }
+
 
     abstract val delay : Long
 

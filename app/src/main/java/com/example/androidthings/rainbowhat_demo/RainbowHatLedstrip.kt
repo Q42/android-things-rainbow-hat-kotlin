@@ -21,6 +21,7 @@ class RainbowHatLedStrip : ILedStrip {
         if (closed) throw Exception("Cannot close an already closed resource")
 
         ledStrip.close()
+        closed = true
     }
 
     override fun write(values: IntArray) {
