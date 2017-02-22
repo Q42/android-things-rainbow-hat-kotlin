@@ -58,6 +58,8 @@ class MainActivity : Activity() {
 
         } catch (ex: RuntimeException) {
 
+        } catch (e: RuntimeException) {
+            Log.e(TAG, e.message)
         } catch (e: IOException) {
             Log.e(TAG, e.message)
         } catch (e: InterruptedException) {
@@ -88,6 +90,8 @@ class MainActivity : Activity() {
         }
 
         playStartupSound()
+        rainbow(on = false)
+        mode = Kitt("    ", 0)
     }
 
     fun playStartupSound() {
