@@ -17,7 +17,7 @@ import com.google.android.things.contrib.driver.ht16k33.Ht16k33
 import com.google.android.things.contrib.driver.rainbowhat.RainbowHat
 import com.google.android.things.pio.Gpio
 import com.google.android.things.pio.PeripheralManagerService
-import java.io.IOException
+import com.google.firebase.database.*
 
 
 class MainActivity : Activity() {
@@ -32,38 +32,23 @@ class MainActivity : Activity() {
 
 
     var mode : Behavior? = null
+    var fbMode : DatabaseReference? = null
 
-
-    var rainbowState = false
-
-
-    fun toggleRainbow() {
-        Log.d(TAG, "toggle rainbow")
-        rainbow(rainbowState)
-        rainbowState = !rainbowState
-    }
+    private var mDatabase: FirebaseDatabase? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         Log.d(TAG, "onCreate")
 
+        initFirebase()
 
         try {
-
             bootSequence()
-
             initButtons()
 
-//            rainbow()
-
-        } catch (ex: RuntimeException) {
-
-        } catch (e: RuntimeException) {
-            Log.e(TAG, e.message)
-        } catch (e: IOException) {
-            Log.e(TAG, e.message)
-        } catch (e: InterruptedException) {
+        } catch (e: Exception) {
             e.printStackTrace()
+            Log.e(TAG, e.message)
         }
     }
 
@@ -75,6 +60,24 @@ class MainActivity : Activity() {
         buttonC!!.close()
 
         mode!!.close()
+    }
+
+    fun initFirebase() {
+        mDatabase = FirebaseDatabase.getInstance()
+        fbMode = mDatabase!!.getReference("mode")
+        fbMode!!.addValueEventListener(object : ValueEventListener {
+            override fun onDataChange(dataSnapshot: DataSnapshot) {
+                val value = dataSnapshot.getValue(Long::class.java)
+                Log.d(TAG, "Value is: " + value)
+
+                handleStateChange("test", value.toInt())
+            }
+
+            override fun onCancelled(error: DatabaseError) {
+                // Failed to read value
+                Log.w(TAG, "Failed to read value.", error.toException())
+            }
+        })
     }
 
     fun bootSequence() {
@@ -121,20 +124,18 @@ class MainActivity : Activity() {
         buttonA = RainbowHat.openButton(RainbowHat.BUTTON_A)
         buttonA!!.setOnButtonEventListener { button, pressed ->
             redLed!!.value = pressed
+
             if (pressed) {
-                mode?.close()
-                mode = Kitt("KITT", 2)
-                mode!!.start()
+                fbMode!!.setValue(2)
             }
         }
 
         buttonB = RainbowHat.openButton(RainbowHat.BUTTON_B)
         buttonB!!.setOnButtonEventListener { button, pressed ->
             greenLed!!.value = pressed
+
             if (pressed) {
-                mode?.close()
-                mode = Kitt("CARR", 1)
-                mode!!.start()
+                fbMode!!.setValue(1)
             }
         }
 
@@ -143,11 +144,16 @@ class MainActivity : Activity() {
         buttonC!!.setOnButtonEventListener { button, pressed ->
             blueLed!!.value = pressed
             if (pressed) {
-                mode?.close()
-                mode = Kitt("HAWQ", 0)
-                mode!!.start()
+                fbMode!!.setValue(0)
             }
+
         }
+    }
+
+    fun handleStateChange(text : String, color: Int) {
+        mode?.close()
+        mode = Kitt(text, color)
+        mode!!.start()
     }
 
     // temp sensor always seems to report the same value of 26.711567
